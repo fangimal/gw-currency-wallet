@@ -1,0 +1,11 @@
+log_is_debug: true
+http_port: "8080"
+grpc:
+  port: 50052
+storage:
+  host: localhost
+  port: 5438
+  username: postgres
+  password: postgres
+  database: postgres
+jwt_secret: "your-very-long-secret-key-here"
