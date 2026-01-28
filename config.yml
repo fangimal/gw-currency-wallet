@@ -1,11 +1,18 @@
+##TEST DATA
+
 log_is_debug: true
+
 http_port: "8080"
-grpc:
-  port: 50052
+exchanger_addr: "localhost:50052"
+
 storage:
   host: localhost
   port: 5438
   username: postgres
   password: postgres
   database: postgres
+
 jwt_secret: "your-very-long-secret-key-here"
+
+kafka_broker: "localhost:9092"
+kafka_topic: "notification"

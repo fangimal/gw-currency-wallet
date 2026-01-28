@@ -24,10 +24,13 @@ func GetBalance(storage storages.Repository) gin.HandlerFunc {
 
 		balance, err := storage.GetBalance(c.Request.Context(), userID, currency)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "balance not found"})
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "balance not found for this currency"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"balance": balance})
+		c.JSON(http.StatusOK, gin.H{
+			"currency": currency,
+			"balance":  balance,
+		})
 	}
 }
