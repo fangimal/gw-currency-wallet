@@ -17,6 +17,17 @@ type ExchangeRequest struct {
 	Amount       float32 `json:"amount" binding:"required,gt=0"`
 }
 
+// @Summary Exchange currencies
+// @Tags exchange
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param request body ExchangeRequest true "Exchange request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/exchange [post]
 func Exchange(storage storages.Repository, authService *auth.Service, notificationService *notifications.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := auth.GetUserID(c)
@@ -88,6 +99,12 @@ func Exchange(storage storages.Repository, authService *auth.Service, notificati
 	}
 }
 
+// @Summary Get current exchange rates
+// @Tags exchange
+// @Security ApiKeyAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]string
+// @Router /api/v1/exchange/rates [get]
 func GetExchangeRates(authService *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rates, err := authService.FetchAndCacheAllRates()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "gw-currency-wallet/docs" //для запуска swagger
 	"gw-currency-wallet/internal/auth"
 	"gw-currency-wallet/internal/config"
 	"gw-currency-wallet/internal/handlers"
@@ -10,12 +11,28 @@ import (
 	"gw-currency-wallet/internal/storages/db/postgres"
 	"gw-currency-wallet/pkg/logging"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// @title Currency Wallet API
+// @version 1.0
+// @description API for currency wallet operations
+// @host localhost:8080
+// @BasePath /api/v1
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	ctx := context.Background()
 
@@ -47,10 +64,15 @@ func main() {
 	//3. Создание сервера
 	router := gin.Default()
 
-	// Публичные ручки
+	// Публичные маршруты
 	router.POST("/api/v1/register", handlers.Register(authService))
 	router.POST("/api/v1/login", handlers.Login(authService))
-	router.GET("/api/v1/exchange/rates", auth.JWTMiddleware(authService), handlers.GetExchangeRates(authService))
+
+	// Swagger
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
 
 	// Защищённые маршруты
 	protected := router.Group("/api/v1")
@@ -58,13 +80,40 @@ func main() {
 	{
 		protected.GET("/balance/:currency", handlers.GetBalance(storage))
 		protected.POST("/exchange", handlers.Exchange(storage, authService, notificationService))
+		protected.GET("/exchange/rates", handlers.GetExchangeRates(authService))
 	}
 
 	//4. Запуск сервера на заданном порту
 	logger.Infof("Server started on port %s", cfg.HTTPPort)
-	if err := router.Run(":" + cfg.HTTPPort); err != nil {
-		logger.Fatalf("Server failed to start: %v", err)
+
+	//if err = router.Run(":" + cfg.HTTPPort); err != nil {
+	//	logger.Fatalf("Server failed to start: %v", err)
+	//}
+
+	srv := &http.Server{
+		Addr:    ":" + cfg.HTTPPort,
+		Handler: router,
 	}
 
+	// Запуск в горутине
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatalf("Server failed to start: %v", err)
+		}
+	}()
+
 	//5. Ожидание сигнала завершения
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+	logger.Info("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatal("Server forced to shutdown:", err)
+	}
+
+	logger.Info("Server exited gracefully")
 }

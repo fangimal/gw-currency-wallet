@@ -8,6 +8,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// @Summary Get user balance for currency
+// @Tags wallet
+// @Security ApiKeyAuth
+// @Param currency path string true "Currency code (USD, RUB, EUR)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/v1/balance/{currency} [get]
 func GetBalance(storage storages.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := auth.GetUserID(c)

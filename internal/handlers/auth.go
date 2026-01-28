@@ -12,6 +12,14 @@ type RegisterRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
+// @Summary Register a new user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "Register request"
+// @Success 201
+// @Failure 400 {object} map[string]string
+// @Router /api/v1/register [post]
 func Register(authService *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req RegisterRequest
@@ -39,6 +47,14 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
+// @Summary Login and get JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login request"
+// @Success 200 {object} LoginResponse
+// @Failure 401 {object} map[string]string
+// @Router /api/v1/login [post]
 func Login(authService *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req LoginRequest

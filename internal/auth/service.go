@@ -93,6 +93,7 @@ func (s *Service) FetchAndCacheAllRates() (map[string]float32, error) {
 	}
 
 	// Сохраняем в кэш
+	s.logger.Infof("Save all rates to cache %v", resp.Rates)
 	s.rateCache.SetAllRates(resp.Rates)
 	return resp.Rates, nil
 }
