@@ -50,6 +50,7 @@ func main() {
 	// Публичные ручки
 	router.POST("/api/v1/register", handlers.Register(authService))
 	router.POST("/api/v1/login", handlers.Login(authService))
+	router.GET("/api/v1/exchange/rates", auth.JWTMiddleware(authService), handlers.GetExchangeRates(authService))
 
 	// Защищённые маршруты
 	protected := router.Group("/api/v1")

@@ -43,7 +43,7 @@ func Exchange(storage storages.Repository, authService *auth.Service, notificati
 		}
 
 		// 2. Получаем курс
-		rate, err := authService.GetExchangeRate(req.FromCurrency, req.ToCurrency)
+		rate, err := authService.GetExchangeRateWithCache(req.FromCurrency, req.ToCurrency)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to get exchange rate"})
 			return
@@ -85,5 +85,16 @@ func Exchange(storage storages.Repository, authService *auth.Service, notificati
 			"received_amount": receivedAmount,
 			"rate":            rate,
 		})
+	}
+}
+
+func GetExchangeRates(authService *auth.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rates, err := authService.FetchAndCacheAllRates()
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch rates"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"rates": rates})
 	}
 }

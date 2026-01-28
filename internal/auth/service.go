@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"gw-currency-wallet/internal/cache"
 	"gw-currency-wallet/internal/proto/proto/exchange"
 	"gw-currency-wallet/internal/storages"
 	"gw-currency-wallet/pkg/logging"
@@ -16,16 +17,18 @@ import (
 type Service struct {
 	storage         storages.Repository
 	jwtSecret       string
-	exchangerClient exchange.ExchangeServiceClient
+	rateCache       *cache.RateCache
 	logger          logging.Logger
+	exchangerClient exchange.ExchangeServiceClient
 }
 
 func NewService(storage storages.Repository, jwtSecret string, exClient exchange.ExchangeServiceClient, logger *logging.Logger) *Service {
 	return &Service{
 		storage:         storage,
 		jwtSecret:       jwtSecret,
-		exchangerClient: exClient,
+		rateCache:       cache.NewRateCache(30 * time.Second),
 		logger:          *logger,
+		exchangerClient: exClient,
 	}
 }
 func (s *Service) Register(ctx context.Context, email, password string) error {
@@ -63,7 +66,13 @@ func (s *Service) ParseToken(tokenStr string) (int64, error) {
 	return 0, errors.New("invalid token claims")
 }
 
-func (s *Service) GetExchangeRate(from, to string) (float32, error) {
+func (s *Service) GetExchangeRateWithCache(from, to string) (float32, error) {
+	// Сначала пробуем кэш
+	if rate, ok := s.rateCache.GetRate(from, to); ok {
+		s.logger.Infof("Get Rate from cache %v", rate)
+		return rate, nil
+	}
+
 	resp, err := s.exchangerClient.GetExchangeRateForCurrency(context.Background(), &exchange.CurrencyRequest{
 		FromCurrency: from,
 		ToCurrency:   to,
@@ -71,7 +80,21 @@ func (s *Service) GetExchangeRate(from, to string) (float32, error) {
 	if err != nil {
 		return 0, fmt.Errorf("failed to get exchange rate: %w", err)
 	}
+
+	s.logger.Infof("Get Rate from exchangerClient %v", resp.Rate)
 	return resp.Rate, nil
+}
+
+// FetchAndCacheAllRates — вызывается при /exchange/rates
+func (s *Service) FetchAndCacheAllRates() (map[string]float32, error) {
+	resp, err := s.exchangerClient.GetExchangeRates(context.Background(), &exchange.Empty{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch all rates: %w", err)
+	}
+
+	// Сохраняем в кэш
+	s.rateCache.SetAllRates(resp.Rates)
+	return resp.Rates, nil
 }
 
 func (s *Service) generateToken(userId int64) (string, error) {
