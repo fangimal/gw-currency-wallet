@@ -17,9 +17,9 @@ type RegisterRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body RegisterRequest true "Register request"
-// @Success 201
+// @Success 201 {object} map[string]string
 // @Failure 400 {object} map[string]string
-// @Router /api/v1/register [post]
+// @Router /register [post]
 func Register(authService *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req RegisterRequest
@@ -30,11 +30,11 @@ func Register(authService *auth.Service) gin.HandlerFunc {
 
 		err := authService.Register(c.Request.Context(), req.Email, req.Password)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "user already exists"})
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Registration failed: user already exists or invalid data"})
 			return
 		}
 
-		c.Status(http.StatusCreated)
+		c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
 	}
 }
 
@@ -54,7 +54,7 @@ type LoginResponse struct {
 // @Param request body LoginRequest true "Login request"
 // @Success 200 {object} LoginResponse
 // @Failure 401 {object} map[string]string
-// @Router /api/v1/login [post]
+// @Router /login [post]
 func Login(authService *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req LoginRequest

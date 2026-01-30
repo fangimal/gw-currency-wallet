@@ -68,6 +68,27 @@ func (p *Postgres) GetBalance(ctx context.Context, userID int64, currency string
 
 	return amount, nil
 }
+
+func (p *Postgres) GetAllBalances(ctx context.Context, userID int64) (map[string]float32, error) {
+	sql := "SELECT currency, amount FROM balances WHERE user_id = $1"
+	rows, err := p.Client.Query(ctx, sql, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	balances := make(map[string]float32)
+	for rows.Next() {
+		var currency string
+		var amount float32
+		if err = rows.Scan(&currency, &amount); err != nil {
+			return nil, err
+		}
+		balances[currency] = amount
+	}
+	return balances, nil
+}
+
 func (p *Postgres) UpdateBalance(ctx context.Context, userID int64, currency string, amount float32) error {
 	result, err := p.Client.Exec(ctx,
 		"UPDATE balances SET amount = amount + $1 WHERE user_id = $2 AND currency = $3",

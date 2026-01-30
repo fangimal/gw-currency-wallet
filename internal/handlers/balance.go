@@ -15,7 +15,7 @@ import (
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
-// @Router /api/v1/balance/{currency} [get]
+// @Router /balance/{currency} [get]
 func GetBalance(storage storages.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := auth.GetUserID(c)
@@ -39,6 +39,33 @@ func GetBalance(storage storages.Repository) gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{
 			"currency": currency,
 			"balance":  balance,
+		})
+	}
+}
+
+// @Summary Get user total balance for all currencies
+// @Tags wallet
+// @Security ApiKeyAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /balance [get]
+func GetTotalBalance(storage storages.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, ok := auth.GetUserID(c)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
+			return
+		}
+
+		balances, err := storage.GetAllBalances(c.Request.Context(), userID)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "failed to get balances"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"balance": balances,
 		})
 	}
 }

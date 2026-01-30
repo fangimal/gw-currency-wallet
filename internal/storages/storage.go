@@ -9,5 +9,6 @@ type Repository interface {
 
 	//Currencies
 	GetBalance(ctx context.Context, userID int64, currency string) (float32, error)
+	GetAllBalances(ctx context.Context, userID int64) (map[string]float32, error)
 	UpdateBalance(ctx context.Context, userID int64, currency string, amount float32) error
 }

@@ -64,9 +64,8 @@ func main() {
 	//3. Создание сервера
 	router := gin.Default()
 
-	// Публичные маршруты
-	router.POST("/api/v1/register", handlers.Register(authService))
-	router.POST("/api/v1/login", handlers.Login(authService))
+	// Настройка маршрутов
+	handlers.SetupRoutes(router, storage, authService, notificationService)
 
 	// Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -74,21 +73,8 @@ func main() {
 		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
 	})
 
-	// Защищённые маршруты
-	protected := router.Group("/api/v1")
-	protected.Use(auth.JWTMiddleware(authService)) // middleware для JWT
-	{
-		protected.GET("/balance/:currency", handlers.GetBalance(storage))
-		protected.POST("/exchange", handlers.Exchange(storage, authService, notificationService))
-		protected.GET("/exchange/rates", handlers.GetExchangeRates(authService))
-	}
-
 	//4. Запуск сервера на заданном порту
 	logger.Infof("Server started on port %s", cfg.HTTPPort)
-
-	//if err = router.Run(":" + cfg.HTTPPort); err != nil {
-	//	logger.Fatalf("Server failed to start: %v", err)
-	//}
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.HTTPPort,
@@ -97,12 +83,12 @@ func main() {
 
 	// Запуск в горутине
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatalf("Server failed to start: %v", err)
 		}
 	}()
 
-	//5. Ожидание сигнала завершения
+	//5. Shutdown. Ожидание сигнала завершения
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
@@ -111,7 +97,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err = srv.Shutdown(ctx); err != nil {
 		logger.Fatal("Server forced to shutdown:", err)
 	}
 

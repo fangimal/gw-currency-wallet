@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS balances(
 );
 
 CREATE INDEX IF NOT EXISTS idx_balances_user_currency ON balances(user_id, currency);
+
+
+CREATE DATABASE wallet_test_db;

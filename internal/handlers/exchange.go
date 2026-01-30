@@ -27,7 +27,7 @@ type ExchangeRequest struct {
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/exchange [post]
+// @Router /exchange [post]
 func Exchange(storage storages.Repository, authService *auth.Service, notificationService *notifications.NotificationService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := auth.GetUserID(c)
@@ -104,7 +104,7 @@ func Exchange(storage storages.Repository, authService *auth.Service, notificati
 // @Security ApiKeyAuth
 // @Success 200 {object} map[string]interface{}
 // @Failure 500 {object} map[string]string
-// @Router /api/v1/exchange/rates [get]
+// @Router /exchange/rates [get]
 func GetExchangeRates(authService *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rates, err := authService.FetchAndCacheAllRates()
