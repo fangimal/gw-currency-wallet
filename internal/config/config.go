@@ -13,7 +13,7 @@ type Config struct {
 	JWTSecret     string        `yaml:"jwt_secret" env-default:"your-very-long-secret-key-here"`
 	HTTPPort      string        `yaml:"http_port" env-default:"8080"`
 	KafkaBroker   string        `yaml:"kafka_broker" env-default:"localhost:9092"`
-	KafkaTopic    string        `yaml:"kafka_topic" env-default:"large-transfers"`
+	KafkaTopic    string        `yaml:"kafka_topic" env-default:"notification"`
 	Storage       StorageConfig `yaml:"storage"`
 }
 

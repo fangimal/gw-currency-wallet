@@ -42,7 +42,7 @@ func main() {
 
 	//1. Загрузка конфига
 	cfg := config.GetConfig()
-	logger.Info("Config loaded")
+	logger.Infof("Config loaded %v", cfg)
 
 	//2. Подключение к бд
 	storage, closeDB := postgres.NewPostgresRepository(ctx, &cfg.Storage, logger)

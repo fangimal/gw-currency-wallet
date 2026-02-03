@@ -1,0 +1,12 @@
+http_port: "8080"
+jwt_secret: "super-secret-for-docker-only"
+exchanger_addr: "gw-exchanger:50052"
+kafka_broker: "kafka:29092"
+kafka_topic: "notification"
+
+storage:
+  host: api_postgres
+  port: 5432
+  username: postgres
+  password: postgres
+  database: postgres
